@@ -9,48 +9,35 @@ import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.core.waiters.WaiterResponse;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
-import software.amazon.awssdk.services.s3.waiters.S3Waiter;
+
 
 public class S3Util {
-	public static final String BUCKET = "s3-vip";
+
 	
-	public static void uploadFile(String fileName, InputStream inputStream) 
-			throws S3Exception, AwsServiceException, SdkClientException, IOException {
-		S3Client client = createS3Client();
+	public static void uploadFile(String fileName, InputStream inputStream, S3Client client, String bucket)
+			throws AwsServiceException, SdkClientException, IOException {
+
 		
 		PutObjectRequest request = PutObjectRequest.builder()
-										.bucket(BUCKET)
+										.bucket(bucket)
 										.key(fileName)
 										.acl("public-read")
 										.build();
 		
 		client.putObject(request, 
 				RequestBody.fromInputStream(inputStream, inputStream.available()));
-		
-		S3Waiter waiter = client.waiter();
-		HeadObjectRequest waitRequest = HeadObjectRequest.builder()
-											.bucket(BUCKET)
-											.key(fileName)
-											.build();
-		
-		WaiterResponse<HeadObjectResponse> waitResponse = waiter.waitUntilObjectExists(waitRequest);
-		
-		waitResponse.matched().response().ifPresent(x -> {
-			// run custom code that should be executed after the upload file exists
-		});
+
+
 	}
 
-	public static void downloadFile(String file)
-			throws S3Exception, AwsServiceException, SdkClientException, IOException {
+	public static void downloadFile(String file, S3Client client, String bucket)
+			throws AwsServiceException, SdkClientException, IOException {
 
-		S3Client client = createS3Client();
 
 		GetObjectRequest request = GetObjectRequest.builder()
-				.bucket(BUCKET)
+				.bucket(bucket)
 				.key(file)
 				.build();
 
@@ -69,9 +56,6 @@ public class S3Util {
 		outputStream.close();
 	}
 
-	private static S3Client createS3Client() {
-		return S3Client.builder().region(Region.EU_WEST_1).build();
-	}
 }
 
 
